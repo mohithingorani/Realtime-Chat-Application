@@ -1,6 +1,7 @@
 "use client"
 
 import TextMessage from "@/app/components/TextMessage";
+import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
@@ -13,6 +14,8 @@ export interface MessageObject {
 }
 
 export default function Chats() {
+  const session = useSession();
+
   const [socket, setSocket] = useState<Socket | undefined>(undefined);
   const [inbox, setInbox] = useState<MessageObject[]>([]);
   const [message, setMessage] = useState<string>("");
@@ -23,7 +26,7 @@ export default function Chats() {
   const [myId, setMyId] = useState<string | undefined>("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [usersConnected, setUsersConnected] = useState<string[]>([])
-
+  const roomNameString = JSON.stringify(roomName)
   const getTime = () => {
     const dateWithouthSecond = new Date();
     const currentTime = dateWithouthSecond.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -55,8 +58,8 @@ export default function Chats() {
       }
     });
 
-    socket.on("enter",(userName:string)=>{
-      setUsersConnected((prevUsers)=>[...prevUsers,userName])
+    socket.on("enter", (userName: string) => {
+      setUsersConnected((prevUsers) => [...prevUsers, userName])
     })
 
     socket.on("connect_error", (err) => {
@@ -79,10 +82,11 @@ export default function Chats() {
     return <div className="text-white font-">Can't Connect.. Retry</div>;
   }
 
-  return (
+  return (<>
     <div className="flex justify-center h-screen bg-[#222222] ">
       <div className="flex flex-col max-w-2xl w-full h-[90vh] mt-8">
-        {JSON.stringify(usersConnected)}
+        <div className="text-white px-1 text-4xl">Room : {roomNameString}</div>
+
         <div className="flex flex-col flex-grow bg-[#0D0D0D] p-8 overflow-y-auto shadow-md rounded-xl">
           {inbox.map((messageObject, index) => (
             <TextMessage key={index} messageObject={messageObject} myId={myId} />
@@ -106,5 +110,6 @@ export default function Chats() {
         </div>
       </div>
     </div>
+  </>
   );
 }
